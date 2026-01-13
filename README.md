@@ -134,6 +134,25 @@ python crypto_misuse_detection.py "./mcp_detection_results" --excel "./results/c
 
 ---
 
+---
+
+## 📊 Benchmarks (CodeQL Performance Evaluation)
+
+This repository also provides benchmark scripts for evaluating the performance of other scheme.
+
+The benchmark scripts are located in:
+
+benchmarks/scripts/
+
+### ▶️ How to Run
+
+On Windows (PowerShell), execute the following commands:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\run_codeql_scan.ps1
+```
+
 ## 🔄 Workflow (Diagram)
 
 ```
