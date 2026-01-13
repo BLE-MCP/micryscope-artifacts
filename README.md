@@ -20,6 +20,16 @@ Before running this tool, you **must install the runtime environments** for each
 
 Ensure each runtime is added to your system **PATH**, so analyzers can be executed from the command line.
 
+
+
+### CodeQL (for Benchmarking)
+
+To reproduce the performance comparison experiments, you must install **CodeQL CLI**:
+
+- Download from: https://github.com/github/codeql-cli-binaries
+- Extract and add the `codeql` executable to your system **PATH**
+- Verify installation.
+
 ---
 
 ## 📂 Directory Structure
