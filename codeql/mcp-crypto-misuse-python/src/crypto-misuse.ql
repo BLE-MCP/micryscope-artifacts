@@ -1,21 +1,7 @@
-/**
- * @name MCP crypto misuse (10 rules, path-aware, Python)
- * @description Approximate reimplementation of scan_crypto_misuse_flows_path_aware.py
- *              directly on Python source code, for performance comparison.
- *
- * @kind problem
- * @id mcp/crypto-misuse-path-aware-python
- * @tags security, external/cwe/cwe-327, external/cwe/cwe-759, external/cwe/cwe-760
- */
-
 import python
 import semmle.python.dataflow.new.DataFlow
 
-// ===========================================================
-// 0. 文件级预过滤：只在“既有 crypto，又有敏感 sink”的文件上跑数据流
-// ===========================================================
 
-/** 获取 AST 节点所属文件（用 Location，避免 getFile() 不存在的问题） */
 predicate nodeInFile(AstNode n, File f) { f = n.getLocation().getFile() }
 
 /** Logging / print sinks: any argument to print/logging. */
@@ -58,11 +44,6 @@ class SensitiveSinkExpr extends Expr {
   }
 }
 
-// -----------------------------------------------------------
-// Helper: crypto-related calls
-// -----------------------------------------------------------
-
-/** 统一的“加解密”调用（EncryptCall）。 */
 class EncryptCall extends Call {
   EncryptCall() {
     this.getFunc().toString().regexpMatch(
@@ -70,14 +51,14 @@ class EncryptCall extends Call {
     )
   }
 
-  /** 可能是 key 的实参（仅使用位置参数，避免 KeywordArg/getAKeywordArgument 不存在）。 */
+ 
   Expr getKeyArg() { result = this.getArg(1) }
 
-  /** 可能是 IV 的实参（仅使用位置参数的保守近似：常见为第 3 个参数）。 */
+
   Expr getIvArg() { result = this.getArg(2) }
 }
 
-/** PBKDF2 / KDF 调用。 */
+
 class Pbkdf2Call extends Call {
   Pbkdf2Call() {
     this.getFunc().toString().regexpMatch(
@@ -85,14 +66,14 @@ class Pbkdf2Call extends Call {
     )
   }
 
-  /** 常见 API：pbkdf2*(password, salt, iterations, ...) => salt 取第 2 个参数 */
+
   Expr getSaltArg() { result = this.getArg(1) }
 
-  /** iterations 常见为第 3 个参数 */
+
   Expr getIterationsArg() { result = this.getArg(2) }
 }
 
-/** MD5 弱哈希。 */
+
 class Md5Call extends Call {
   Md5Call() {
     this.getFunc().toString().regexpMatch("(?i)(hashlib\\.md5|\\bmd5\\b)")
@@ -100,7 +81,7 @@ class Md5Call extends Call {
   Expr getDataArg() { result = this.getArg(0) }
 }
 
-/** SHA1 弱哈希。 */
+
 class Sha1Call extends Call {
   Sha1Call() {
     this.getFunc().toString().regexpMatch("(?i)(hashlib\\.sha1|\\bsha1\\b)")
@@ -108,14 +89,14 @@ class Sha1Call extends Call {
   Expr getDataArg() { result = this.getArg(0) }
 }
 
-/** DES 使用。 */
+
 class DesCall extends Call {
   DesCall() {
     this.getFunc().toString().regexpMatch("(?i)(des\\.new|des\\.|\\bDES\\b)")
   }
 }
 
-/** 固定随机种子（用字符串数字判断，避免 IntLiteral 类型不存在）。 */
+
 class FixedSeedCall extends Call {
   FixedSeedCall() {
     this.getFunc().toString().regexpMatch(
@@ -130,46 +111,38 @@ class FixedSeedCall extends Call {
   Expr getSeedExpr() { result = this.getArg(0) }
 }
 
-/** HMAC / MAC 调用。 */
+
 class MacCall extends Call {
   MacCall() {
     this.getFunc().toString().regexpMatch("(?i)(hmac\\.new|crypto\\.createhmac|hash_hmac|mac\\.getinstance|hmacsha256)")
   }
 }
 
-/** 强加密（AES / RSA / DES 等），供 Rule 8 使用。 */
+
 class StrongEncryptionCall extends EncryptCall {
   StrongEncryptionCall() {
     this.getFunc().toString().regexpMatch("(?i)(aes|rsa|des|cipher|encrypt)")
   }
 }
 
-// -----------------------------------------------------------
-// 文件级过滤：只有“有 crypto 且有敏感 sink”的文件才做 dataflow 判断
-// -----------------------------------------------------------
 
-/** 文件是否包含加密调用。 */
 predicate fileHasCrypto(File f) {
   exists(EncryptCall c | nodeInFile(c, f)) or
   exists(Md5Call m | nodeInFile(m, f)) or
   exists(Sha1Call s | nodeInFile(s, f))
 }
 
-/** 文件是否包含敏感 sink。 */
+
 predicate fileHasSensitiveSink(File f) {
   exists(SensitiveSinkExpr e | nodeInFile(e, f))
 }
 
-/** 真正需要做数据流分析的“有意义文件”。 */
+
 predicate interestingFile(File f) {
   fileHasCrypto(f) and fileHasSensitiveSink(f)
 }
 
-// -----------------------------------------------------------
-// Data-flow: crypto result → Sensitive sink
-// -----------------------------------------------------------
 
-/** 是否存在从 e 到任意敏感 sink 的本地数据流。 */
 predicate leaksToSensitiveSink(Expr e) {
   exists(DataFlow::Node src, DataFlow::Node sink, File f |
     src.asExpr() = e and
@@ -181,18 +154,14 @@ predicate leaksToSensitiveSink(Expr e) {
   )
 }
 
-// -----------------------------------------------------------
-// Rule 实现（10 条规则）
-// -----------------------------------------------------------
 
-/** 常量/字面量近似：StringLiteral 或 bytes 风格 b'..' 或纯数字 */
 predicate isConstantLike(Expr e) {
   e instanceof StringLiteral or
   e.toString().regexpMatch("(?s)^b['\"].*['\"]$") or
   e.toString().regexpMatch("^[0-9]+$")
 }
 
-/** ECB 模式（Rule 1）。 */
+
 predicate rule1_ecb(EncryptCall c, string ruleId, string msg, string evKey, string evMatch) {
   (
     c.getFunc().toString().regexpMatch("(?i)ecb")
@@ -212,7 +181,7 @@ predicate rule1_ecb(EncryptCall c, string ruleId, string msg, string evKey, stri
   )
 }
 
-/** CBC + 常量 IV（Rule 9）。 */
+
 predicate rule9_cbc_constant_iv(EncryptCall c, Expr iv, string ruleId, string msg, string evKey, string evMatch) {
   c.getFunc().toString().regexpMatch("(?i)cbc") and
   iv = c.getIvArg() and
@@ -230,7 +199,7 @@ predicate rule9_cbc_constant_iv(EncryptCall c, Expr iv, string ruleId, string ms
   )
 }
 
-/** 硬编码加密 key（Rule 2 一部分）。 */
+
 predicate rule2_hardcoded_key(EncryptCall c, Expr key, string ruleId, string msg, string evKey, string evMatch) {
   key = c.getKeyArg() and
   isConstantLike(key) and
@@ -247,9 +216,7 @@ predicate rule2_hardcoded_key(EncryptCall c, Expr key, string ruleId, string msg
   )
 }
 
-/**
- * 硬编码 LLM API key（Rule 2 另一部分）。
- */
+
 predicate rule2_hardcoded_api_key(Call c, StringLiteral val, string ruleId, string msg, string evKey, string evMatch) {
   exists(StringLiteral k |
     k = c.getArg(_) and
@@ -272,7 +239,7 @@ predicate rule2_hardcoded_api_key(Call c, StringLiteral val, string ruleId, stri
   )
 }
 
-/** PBKDF2 常量盐（Rule 10）。 */
+
 predicate rule10_pbkdf2_constant_salt(Pbkdf2Call c, Expr salt, string ruleId, string msg, string evKey, string evMatch) {
   salt = c.getSaltArg() and
   isConstantLike(salt) and
@@ -289,7 +256,7 @@ predicate rule10_pbkdf2_constant_salt(Pbkdf2Call c, Expr salt, string ruleId, st
   )
 }
 
-/** PBKDF2 迭代次数过低（Rule 3）：用正则近似 < 1000（1~3 位数字）。 */
+
 predicate rule3_pbkdf2_low_iter(Pbkdf2Call c, Expr itExpr, string ruleId, string msg, string evKey, string evMatch) {
   itExpr = c.getIterationsArg() and
   exists(string itTxt |
@@ -306,7 +273,7 @@ predicate rule3_pbkdf2_low_iter(Pbkdf2Call c, Expr itExpr, string ruleId, string
   )
 }
 
-/** MD5 在敏感上下文中使用（Rule 4）。 */
+
 predicate rule4_md5_sensitive(Md5Call c, string ruleId, string msg, string evKey, string evMatch) {
   (
     exists(Function f |
@@ -329,7 +296,7 @@ predicate rule4_md5_sensitive(Md5Call c, string ruleId, string msg, string evKey
   )
 }
 
-/** SHA1 在敏感上下文中使用（Rule 5）。 */
+
 predicate rule5_sha1_sensitive(Sha1Call c, string ruleId, string msg, string evKey, string evMatch) {
   (
     exists(Function f |
@@ -352,7 +319,7 @@ predicate rule5_sha1_sensitive(Sha1Call c, string ruleId, string msg, string evK
   )
 }
 
-/** 固定随机种子（Rule 6）。 */
+
 predicate rule6_fixed_seed(FixedSeedCall c, Expr seedExpr, string ruleId, string msg, string evKey, string evMatch) {
   seedExpr = c.getSeedExpr() and
   exists(string seedTxt |
@@ -369,7 +336,7 @@ predicate rule6_fixed_seed(FixedSeedCall c, Expr seedExpr, string ruleId, string
   )
 }
 
-/** DES 使用（Rule 7）。 */
+
 predicate rule7_des(DesCall c, string ruleId, string msg, string evKey, string evMatch) {
   ruleId = "Rule 7" and
   evKey  = "des_usage" and
@@ -381,7 +348,7 @@ predicate rule7_des(DesCall c, string ruleId, string msg, string evKey, string e
   )
 }
 
-/** Encryption without MAC（Rule 8，粗略版：同一文件有加密但没有任何 MacCall）。 */
+
 predicate rule8_encryption_no_mac(StrongEncryptionCall c, string ruleId, string msg, string evKey, string evMatch) {
   exists(File f |
     nodeInFile(c, f) and
@@ -397,9 +364,6 @@ predicate rule8_encryption_no_mac(StrongEncryptionCall c, string ruleId, string 
   )
 }
 
-// -----------------------------------------------------------
-// 汇总所有规则，形成一个统一的 violation 视图
-// -----------------------------------------------------------
 
 predicate cryptoViolation(Expr e, string ruleId, string msg, string evKey, string evMatch) {
   exists(EncryptCall c |
@@ -450,9 +414,6 @@ predicate cryptoViolation(Expr e, string ruleId, string msg, string evKey, strin
   )
 }
 
-// -----------------------------------------------------------
-// 最终 select：结果模式必须是 (entity, string)
-// -----------------------------------------------------------
 
 from Expr e, string ruleId, string msg, string evKey, string evMatch
 where cryptoViolation(e, ruleId, msg, evKey, evMatch)
@@ -460,3 +421,4 @@ select e,
   msg + " | Rule: " + ruleId +
   " | EvidenceKey: " + evKey +
   " | EvidenceMatch: " + evMatch
+
