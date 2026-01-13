@@ -39,7 +39,6 @@ mcp_crypto_misuse_detection/
 ├── test/                      # test cases
 ├── crypto_misuse_detection.py # Misuse detection engine
 └── README.md
-
 ```
 
 ---
@@ -51,72 +50,71 @@ mcp_crypto_misuse_detection/
 Run each analyzer inside its directory. Example:
 
 - **JavaScript**
-    
-    ```bash
-    cd js_ast_analyzer
-    node js_ast_analyzer.js "../test/mcpmarket/JavaScript" "../mcp_detection_results/Javascript/mcpmarket"
-    ```
-    
+  
+  ```bash
+  cd js_ast_analyzer
+  node js_ast_analyzer.js "../datasets/mcpmarket/JavaScript" "../mcp_detection_results/Javascript/mcpmarket"
+  ```
+
 - **Python**
-    
-    ```bash
-    cd python_ast_analyzer
-    python python_ast_analyzer.py "../test/mcpmarket/Python" "../mcp_detection_results/Python/mcpmarket"
-    ```
-    
+  
+  ```bash
+  cd python_ast_analyzer
+  python python_ast_analyzer.py "../datasets/mcpmarket/Python" "../mcp_detection_results/Python/mcpmarket"
+  ```
+
 - **Go**
-    
-    ```bash
-    cd go_ast_analyzer
-    go run go_ast_analyzer.go "../test/mcpmarket/Go" "../mcp_detection_results/Go/mcpmarket"
-    ```
-    
+  
+  ```bash
+  cd go_ast_analyzer
+  go run go_ast_analyzer.go "../datasets/mcpmarket/Go" "../mcp_detection_results/Go/mcpmarket"
+  ```
+
 - **PHP**
-    
-    ```bash
-    cd php_ast_analyzer
-    php php_ast_analyzer.php "../test/mcpmarket/PHP" "../mcp_detection_results/PHP/mcpmarket"
-    ```
-    
+  
+  ```bash
+  cd php_ast_analyzer
+  php php_ast_analyzer.php "../datasets/mcpmarket/PHP" "../mcp_detection_results/PHP/mcpmarket"
+  ```
+
 - **Rust**
-    
-    ```bash
-    cd rust_ast_analyzer/src
-    cargo run -- "../../test/mcpmarket/Rust" "../mcp_detection_results/Rust/mcpmarket"
-    ```
-    
+  
+  ```bash
+  cd rust_ast_analyzer/src
+  cargo run -- "../../datasets/mcpmarket/Rust" "../mcp_detection_results/Rust/mcpmarket"
+  ```
+
 - **Java**
-    
-    ```bash
-    cd java_ast_analyzer
-    mvn clean compile
-    mvn dependency:resolve
-    mvn exec:java -Dexec.mainClass=org.example.Main -Dexec.args="../test/mcpmarket/Java ../mcp_detection_results/Java/mcpmarket"
-    ```
-    
+  
+  ```bash
+  cd java_ast_analyzer
+  mvn clean compile
+  mvn dependency:resolve
+  mvn exec:java -Dexec.mainClass=org.example.Main -Dexec.args="../datasets/mcpmarket/Java ../mcp_detection_results/Java/mcpmarket"
+  ```
+
 - **C#**
-    
-    ```bash
-    cd csharp_ast_analyzer
-    dotnet build
-    dotnet run -- "../test/mcpmarket/C#" "../mcp_detection_results/C#/mcpmarket"
-    ```
-    
+  
+  ```bash
+  cd csharp_ast_analyzer
+  dotnet build
+  dotnet run -- "../datasets/mcpmarket/C#" "../mcp_detection_results/C#/mcpmarket"
+  ```
+
 - **Ruby**
-    
-    ```bash
-    cd ruby_ast_analyzer
-    ruby ruby_ir.rb "../test/mcpmarket/Ruby" "../mcp_detection_results/Ruby/mcpmarket"
-    ```
-    
+  
+  ```bash
+  cd ruby_ast_analyzer
+  ruby ruby_ir.rb "../datasets/mcpmarket/Ruby" "../mcp_detection_results/Ruby/mcpmarket"
+  ```
+
 - **Swift**
-    
-    ```bash
-    cd swift_ast_analyzer
-    swift build
-    .build/debug/swift_ast_analyzer.exe "../test/mcpmarket/Swift" "../mcp_detection_results/Swift/mcpmarket"
-    ```
-    
+  
+  ```bash
+  cd swift_ast_analyzer
+  swift build
+  .build/debug/swift_ast_analyzer.exe "../test/mcpmarket/Swift" "../mcp_detection_results/Swift/mcpmarket"
+  ```
 
 ---
 
